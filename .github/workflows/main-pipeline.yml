@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   call-security-check:
     uses: ./.github/workflows/python-security-check.yml
