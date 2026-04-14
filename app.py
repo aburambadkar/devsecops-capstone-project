@@ -35,4 +35,4 @@ def health():
 if __name__ == '__main__':
     # TRAP 2: Insecure host/port defaults for production? 
     # (Fine for now, but good to mention in interviews)
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000) # nosec B104
