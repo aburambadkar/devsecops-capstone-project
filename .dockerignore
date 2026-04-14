@@ -1,0 +1,9 @@
+# Do not copy these into the image
+.git
+.gitignore
+.dockerignore
+docker-compose.yml
+Dockerfile
+myenv/
+__pycache__/
+*.md
