@@ -11,9 +11,14 @@ permissions:
 jobs:
   call-security-check:
     uses: ./.github/workflows/python-security-check.yml
+
   docker-build:
     needs: call-security-check
     uses: ./.github/workflows/docker-build-push.yml
-    secrets:
+    with:
       DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME }}
+    secrets:
       DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+
+   
+
