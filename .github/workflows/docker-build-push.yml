@@ -33,7 +33,7 @@ jobs:
           docker build -t ${{ vars.DOCKER_USERNAME }}/inventory-app:${{ github.sha }} .
 
       - name: Scan Image (Trivy)
-        uses: aquasecurity/trivy-action@057a97c7e7821a5776cebc9bb87c984fa69cba8f1
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         with:
           image-ref: '${{ vars.DOCKER_USERNAME }}/inventory-app:${{ github.sha }}'
           format: 'table'
