@@ -1,0 +1,26 @@
+# Environments
+myenv/
+env/
+venv/
+ENV/
+bin/
+lib/
+include/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDEs
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Secrets (Preventing accidental local env file pushes)
+.env
+*.pem
+*.key

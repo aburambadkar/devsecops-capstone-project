@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DevOps Inventory</title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; background: #f4f4f4; }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background: #333; color: white; }
+    </style>
+</head>
+<body>
+    <h1>DevOps Tool Inventory</h1>
+    <table>
+        <tr>
+            <th>Tool Name</th>
+            <th>Category</th>
+        </tr>
+        {% for tool in tools %}
+        <tr>
+            <td>{{ tool.name }}</td>
+            <td>{{ tool.category }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
