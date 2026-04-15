@@ -37,6 +37,11 @@ jobs:
           port: 22
           source: "docker-compose.yml"
           target: "~/devsecops-capstone-project"
+          
+      - name: Sanity Check Inputs
+        run: |
+          echo "Username is: ${{ inputs.DOCKER_USERNAME }}"
+          echo "Tag is: ${{ inputs.IMAGE_TAG }}"
 
       - name: Executing remote ssh commands
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2
@@ -47,8 +52,8 @@ jobs:
           port: 22 
           script: | 
                 cd ~/devsecops-capstone-project
-                export DOCKER_USERNAME="${{ inputs.DOCKER_USERNAME }}" \
-                export IMAGE_TAG="${{ inputs.IMAGE_TAG }}" \
-                export DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+                export DOCKER_USERNAME="${{ inputs.DOCKER_USERNAME }}" 
+                export IMAGE_TAG="${{ inputs.IMAGE_TAG }}" 
+                export DB_PASSWORD="${{ secrets.DB_PASSWORD }}" 
                 echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ inputs.DOCKER_USERNAME }}" --password-stdin
                 docker compose up -d --pull always --force-recreate
