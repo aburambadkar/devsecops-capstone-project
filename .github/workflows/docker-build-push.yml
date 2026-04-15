@@ -1,0 +1,50 @@
+name: Reusable Docker Build and Scan
+
+on:
+  workflow_call:
+    inputs:
+      DOCKER_USERNAME:      
+        required: true
+        type: string
+    secrets:
+      DOCKER_TOKEN:
+        required: true
+
+jobs:
+  build-and-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Lint Dockerfile (Hadolint)
+        uses: hadolint/hadolint-action@2332a7b74a6de0dda2e2221d575162eba76ba5e5
+        with:
+          dockerfile: Dockerfile
+          ignore: DL3008
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121
+        with:
+          username: ${{ vars.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build image for scan
+        run: |
+          docker build -t ${{ vars.DOCKER_USERNAME }}/inventory-app:${{ github.sha }} .
+
+      - name: Scan Image (Trivy)
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+        with:
+          image-ref: '${{ vars.DOCKER_USERNAME }}/inventory-app:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Push Image
+        run: |
+          docker push ${{ vars.DOCKER_USERNAME }}/inventory-app:${{ github.sha }}
+          docker tag ${{ vars.DOCKER_USERNAME }}/inventory-app:${{ github.sha }} ${{ vars.DOCKER_USERNAME }}/inventory-app:latest
+          docker push ${{ vars.DOCKER_USERNAME }}/inventory-app:latest
