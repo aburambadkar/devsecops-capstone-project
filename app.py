@@ -5,8 +5,7 @@ import os
 app = Flask(__name__)
 
 def get_db_connection():
-    # TRAP 1: This will fail if MySQL isn't ready immediately. 
-    # Consider adding a retry loop or 'wait-for-it' script here later.
+    
     return mysql.connector.connect(
         host=os.getenv("DB_HOST", "localhost"),
         user=os.getenv("DB_USER", "root"),
@@ -29,10 +28,9 @@ def index():
 
 @app.route('/health')
 def health():
-    # Use this for your "Health Check" workflow step!
+   
     return jsonify({"status": "up"}), 200
 
 if __name__ == '__main__':
-    # TRAP 2: Insecure host/port defaults for production? 
-    # (Fine for now, but good to mention in interviews)
+   
     app.run(host='0.0.0.0', port=5000) # nosec B104
