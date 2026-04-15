@@ -3,6 +3,14 @@ name: Main CI Pipeline
 on:
   pull_request:
     branches: [ "main" ]
+    paths:
+      - 'app.py'
+      - 'Dockerfile'
+      - 'requirements.txt'
+      - 'templates/**'
+      - 'db/**'
+      - 'docker-compose.yml'
+      - '.github/workflows/**'
 
 permissions:
   contents: read
@@ -20,6 +28,13 @@ jobs:
     secrets:
       DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
   
-
-   
-
+  deploy-to-ec2:
+    needs: docker-build
+    uses: ./.github/workflows/deploy.yml 
+    with:
+      DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME }}
+    secrets:
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_USERNAME: ${{ secrets.EC2_USERNAME }} 
+      EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+      DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}

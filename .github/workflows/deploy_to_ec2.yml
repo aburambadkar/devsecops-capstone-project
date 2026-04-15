@@ -1,0 +1,47 @@
+name: Reusable Deployment to EC2
+
+on:
+  workflow_call:
+    inputs:
+      DOCKER_USERNAME:
+        required: true
+        type: string
+    secrets:
+      EC2_HOST:
+        required: true
+      EC2_USERNAME:
+        required: true
+      EC2_SSH_KEY:
+        required: true
+      DOCKER_TOKEN:
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Copy docker-compose.yml to EC2
+        uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          source: "docker-compose.yml"
+          target: "~/devsecops-capstone-project"
+
+      - name: Executing remote ssh commands
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22 
+          script: | 
+                mkdir -p ~/devsecops-capstone-project 
+                cd ~/devsecops-capstone-project
+                echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ inputs.DOCKER_USERNAME }}" --password-stdin
+                docker compose up -d --pull always --force-recreate
