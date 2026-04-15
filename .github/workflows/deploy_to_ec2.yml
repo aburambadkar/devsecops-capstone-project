@@ -47,8 +47,8 @@ jobs:
           port: 22 
           script: | 
                 cd ~/devsecops-capstone-project
-                DOCKER_USERNAME="${{ inputs.DOCKER_USERNAME }}" \
-                IMAGE_TAG="${{ inputs.IMAGE_TAG }}" \
-                DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+                export DOCKER_USERNAME="${{ inputs.DOCKER_USERNAME }}" \
+                export IMAGE_TAG="${{ inputs.IMAGE_TAG }}" \
+                export DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
                 echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ inputs.DOCKER_USERNAME }}" --password-stdin
                 docker compose up -d --pull always --force-recreate
