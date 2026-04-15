@@ -35,9 +35,10 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
-          source: "docker-compose.yml"
+          source: "docker-compose.yml, db/init.sql"
           target: "~/devsecops-capstone-project"
-          
+          strip_components: 0
+
       - name: Sanity Check Inputs
         run: |
           echo "Username is: ${{ inputs.DOCKER_USERNAME }}"
