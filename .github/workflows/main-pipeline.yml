@@ -11,4 +11,21 @@ permissions:
 jobs:
   call-security-check:
     uses: ./.github/workflows/python-security-check.yml
+
+  docker-build:
+    needs: call-security-check
+    uses: ./.github/workflows/docker-build-push.yml
+    with:
+      DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME }}
+    secrets:
+      DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+  
+  deploy-to-aws:
+    needs: docker-build  # This is the "Gate": Only run if build/scan passed!
+    uses: ./.github/workflows/deploy-to-ec2.yml
+    with:
+      DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME }}
+      secrets: inherit # This allows the reusable workflow to use the EC2 secrets
+
    
+

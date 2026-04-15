@@ -1,8 +1,9 @@
 # STAGE 1: Build Stage
 FROM python:3.12-slim AS Builder
 
+WORKDIR /app
 # Install system level dependencies required for MYSQL
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     default-libmysqlclient-dev \
     build-essential \
     pkg-config \
@@ -23,7 +24,7 @@ WORKDIR /app
 COPY --from=Builder /install /usr/local
 
 # Install runtime-only library for MySQL
-RUN apt-get update && apt-get install -y default-libmysqlclient-dev && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends default-libmysqlclient-dev && rm -rf /var/lib/apt/lists/*
 
 # Copy application code
 COPY . .
