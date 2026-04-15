@@ -33,8 +33,10 @@ jobs:
     uses: ./.github/workflows/deploy_to_ec2.yml
     with:
       DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME }}
+      IMAGE_TAG: ${{ github.sha }}
     secrets:
       EC2_HOST: ${{ secrets.EC2_HOST }}
       EC2_USERNAME: ${{ secrets.EC2_USERNAME }} 
       EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
       DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}

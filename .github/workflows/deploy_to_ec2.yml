@@ -6,6 +6,9 @@ on:
       DOCKER_USERNAME:
         required: true
         type: string
+      IMAGE_TAG:
+        required: true
+        type: string
     secrets:
       EC2_HOST:
         required: true
@@ -14,6 +17,8 @@ on:
       EC2_SSH_KEY:
         required: true
       DOCKER_TOKEN:
+        required: true
+      DB_PASSWORD: 
         required: true
 
 jobs:
@@ -42,5 +47,8 @@ jobs:
           port: 22 
           script: | 
                 cd ~/devsecops-capstone-project
+                DOCKER_USERNAME="${{ inputs.DOCKER_USERNAME }}" \
+                IMAGE_TAG="${{ inputs.IMAGE_TAG }}" \
+                DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
                 echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ inputs.DOCKER_USERNAME }}" --password-stdin
                 docker compose up -d --pull always --force-recreate

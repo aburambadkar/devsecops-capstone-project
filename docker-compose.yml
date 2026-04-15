@@ -18,7 +18,7 @@ services:
       retries: 5
 
   app:
-    image: ${DOCKER_USERNAME}/${DOCKER_REPO}:${IMAGE_TAG}
+    image: ${DOCKER_USERNAME}/inventory-app:${IMAGE_TAG:-latest}
     container_name: flask_app
     ports:
       - "8080:5000" 
