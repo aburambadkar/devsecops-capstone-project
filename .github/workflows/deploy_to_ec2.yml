@@ -41,7 +41,6 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22 
           script: | 
-                mkdir -p ~/devsecops-capstone-project 
                 cd ~/devsecops-capstone-project
                 echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ inputs.DOCKER_USERNAME }}" --password-stdin
                 docker compose up -d --pull always --force-recreate
