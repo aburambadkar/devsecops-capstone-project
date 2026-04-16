@@ -10,7 +10,7 @@ The core objective was to move beyond simple deployment by establishing a "secur
 
 ###  Key Objectives
 * **Automation:** Eliminate manual intervention by using GitHub Actions for build and deployment.
-* **Security Integration:** Implement a "Shift-Left" approach by scanning code and containers (Bandit, Hadolint, Trivy) before they reach production.
+* **Security Integration:** Implement a "Shift-Left" approach by scanning code and containers (Bandit, Hadolint, Trivy, Gitleaks) before they reach production.
 * **Containerization & Orchestration:** Package the application and database into optimized Docker images and use Docker Compose to manage multi-container networking and environment consistency.
 
 ## Architecture Diagram
@@ -62,9 +62,9 @@ The following environment data must be configured to enable the automated deploy
 | :--- | :--- | :--- |
 | **`DOCKER_USERNAME`** | **Variable** | Docker Hub ID used for image tagging and registry identification. |
 | **`DOCKER_TOKEN`** | **Secret** | Personal Access Token (PAT) for secure image pushes. |
-| **`EC2_HOST`** | **Secret** | Public IP or DNS of the Target AWS EC2 instance. |
+| **`EC2_HOST`** | **Secret** | Public IP of the Target AWS EC2 instance. |
 | **`EC2_SSH_KEY`** | **Secret** | Private SSH key for secure remote command execution. |
-| **`DB_PASSWORD`** | **Secret** | Secure database credential passed to both Flask and MySQL containers. |
+| **`DB_PASSWORD`** | **Secret** | Secure database credential passed to both Flask and MySQL container. |
 
 ### Infrastructure Specifications (AWS)
 * **Compute:** AWS EC2 (Ubuntu 22.04 LTS).
@@ -75,7 +75,7 @@ The following environment data must be configured to enable the automated deploy
 
 
 ## Engineering Challenges & Troubleshooting
-Building this pipeline involved overcoming several "hard-hit" integration hurdles. While many minor issues were resolved during the build stages (linting, permissions, etc.), the following challenges required deep architectural analysis and manual intervention.
+Building this pipeline involved overcoming several hard-hit integration hurdles. While many minor issues were resolved during the build stages (linting, permissions, etc.), the following challenges required deep analysis and manual intervention.
 
 ### Git Workflow & "Conflicted Branch" Recovery
  **The Challenge** 
@@ -83,19 +83,19 @@ While following a feature-branch workflow, several untested and unstable commits
 
 **The Resolution**
 I performed a Git Revert to roll back the repository to its last known stable state. 
-Instead of spending hours resolving complex cherry-pick conflicts, I performed a "Clean Slate" recovery.I created a brand-new branch directly from the stable main branch.
+Instead of spending hours resolving complex cherry-pick conflicts, I created a brand-new branch directly from the stable main branch.
 I manually ported only the specific, verified files and configurations into this new branch. This allowed for a clean, conflict-free Pull Request and a successful merge into main.
 
 **The Lesson**
 This reinforced the necessity of Branch Protection and atomic commits.
 I learned that even in solo projects, maintaining a clean main branch is vital for deployment reliability.
 
-### Internal 500 Errors After Successful Deployment
+### Internal Server Error After Successful Deployment
 **The Challenge** 
 Upon deployment, the application containers were reported as "Healthy," yet the URL returned an HTTP 500 Internal Server Error.
 
 **The Root Cause**
-* During the initial run, the db/init.sql file was missing on the EC2 host. Docker Compose, following the volume mount instruction, created a directory named init.sql instead of a file. MySQL initialized its internal data volume (db_data) using this empty/invalid mount, meaning no tables were created.
+During the initial run, the db/init.sql file was missing on the EC2 host. Volume mount instruction in docker compose, created a directory named init.sql instead of a file. MySQL initialized its internal data volume db_data meaning no tables were created.
 
 App logs showed the following crash:
 
@@ -104,16 +104,16 @@ mysql.connector.errors.ProgrammingError: 1146 (42S02): Table 'inventory.tools' d
 ```
 
 **The Resolution**
- I updated the deploy.yml workflow to explicitly include the db/ directory in the appleboy scp-action phase, ensuring the real init.sql script reached the EC2 host.
+ I updated the deploy_to_ec2.yml workflow to explicitly include the db/ directory in the appleboy/scp-action phase, ensuring the real init.sql script reached the EC2 host.
  Executed sudo docker compose down -v to delete the stale, uninitialized database volumes.
- This forced MySQL to treat the next startup as a "First Run," finally executing the init.sql script and creating the required schema.
+ This forced MySQL to treat the next startup as a First Run and finally executing the init.sql script and creating the required schema.
 
 **The Lesson**
-I learned that Database Volumes are persistent. Simply fixing a script isn't enough; you must reset the volume state to force a re-initialization.
+I learned that Database volumes are persistent. Simply fixing a script isn't enough; you must reset the volume state to force a re-initialization.
 
 ## Reflections & Future Enhancements:
 
-Looking back at the deployment, there are a few areas where the system's reliability could be "hardened." These aren't necessarily missing features, but rather lessons learned on how to move from a working prototype to a more resilient, production-grade environment.
+Looking back at the deployment, there are a few areas where the system's reliability could be hardened. These aren't necessarily missing features, but rather lessons learned on how to move from a working prototype to a more resilient, production-grade environment.
 
 One of the biggest takeaways was that a "Healthy" container doesn't always mean a "Functional" app.
 
