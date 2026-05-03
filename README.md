@@ -102,11 +102,11 @@ You can run the full two-tier stack on your machine with Docker Compose. No GitH
 **Prerequisites:** Docker and Docker Compose installed.
 
 ```bash
-# 1. Build the Flask image locally
-docker build -t inventory-app:latest .
+# 1. Build the image using your Docker Hub username
+docker build -t <your-dockerhub-username>/inventory-app:latest .
 
 # 2. Set the required environment variables
-export DOCKER_USERNAME=inventory-app
+export DOCKER_USERNAME=<your-dockerhub-username>
 export IMAGE_TAG=latest
 export DB_PASSWORD=yourpassword
 
@@ -121,8 +121,6 @@ To stop and clean up:
 ```bash
 docker compose down -v
 ```
-
-> **Note:** The `docker-compose.yml` references `${DOCKER_USERNAME}/inventory-app:${IMAGE_TAG}` for the app image. When running locally, set `DOCKER_USERNAME=inventory-app` and `IMAGE_TAG=latest` so it matches the image you built in step 1.
 
 ## Reflections & Future Enhancements:
 
