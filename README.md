@@ -6,7 +6,7 @@
 
 This project demonstrates a production-ready **DevSecOps lifecycle** for a containerized two-tier web application. The application consists of a **Flask-based inventory system** paired with a **MySQL database**, orchestrated using **Docker Compose**.
 
-The core objective was to move beyond simple deployment by establishing a "security-first" CI/CD pipeline. Using **GitHub Actions**, the workflow automates the entire process from the moment code is pushed—performing static analysis, vulnerability scanning, and multi-stage builds before deploying the verified artifacts to an **AWS EC2** instance.
+The core objective was to move beyond simple deployment by establishing a "security-first" CI/CD pipeline. Using **GitHub Actions**, the workflow automates the entire process when a Pull Request is opened against `main`—performing static analysis, vulnerability scanning, and multi-stage builds before deploying the verified artifacts to an **AWS EC2** instance.
 
 ###  Key Objectives
 * **Automation:** Eliminate manual intervention by using GitHub Actions for build and deployment.
@@ -51,6 +51,26 @@ The following diagram illustrates the end-to-end DevSecOps lifecycle, from the d
                                                         +-------------------------------------------+
 ```
 
+## Project Structure
+
+```
+devsecops-capstone-project/
+├── .github/
+│   └── workflows/
+│       ├── main-pipeline.yml          # Orchestrator — triggers on PR to main
+│       ├── python-security-check.yml  # Phase 1: flake8, Bandit, Gitleaks
+│       ├── docker-build-push.yml      # Phase 2: Hadolint, Docker build, Trivy, push
+│       └── deploy_to_ec2.yml          # Phase 3: SCP + SSH deploy to EC2
+├── db/
+│   └── init.sql                       # MySQL schema + seed data
+├── templates/
+│   └── index.html                     # Flask HTML template
+├── app.py                             # Flask application (inventory routes + /health)
+├── Dockerfile                         # Multi-stage build (builder + runtime)
+├── docker-compose.yml                 # Service orchestration (Flask app + MySQL)
+└── requirements.txt                   # Python dependencies
+```
+
 ## System Configuration & Environment
 
 To maintain a secure and decoupled architecture, the pipeline utilizes a combination of **GitHub Repository Variables** for non-sensitive configuration and **GitHub Secrets** for sensitive credentials.
@@ -63,6 +83,7 @@ The following environment data must be configured to enable the automated deploy
 | **`DOCKER_USERNAME`** | **Variable** | Docker Hub ID used for image tagging and registry identification. |
 | **`DOCKER_TOKEN`** | **Secret** | Personal Access Token (PAT) for secure image pushes. |
 | **`EC2_HOST`** | **Secret** | Public IP of the Target AWS EC2 instance. |
+| **`EC2_USERNAME`** | **Secret** | SSH username for the EC2 instance (e.g. `ubuntu` for Ubuntu AMIs). |
 | **`EC2_SSH_KEY`** | **Secret** | Private SSH key for secure remote command execution. |
 | **`DB_PASSWORD`** | **Secret** | Secure database credential passed to both Flask and MySQL container. |
 
@@ -74,42 +95,34 @@ The following environment data must be configured to enable the automated deploy
 * **Host Requirements:** Docker and Docker Compose pre-installed on the instance.
 
 
-## Engineering Challenges & Troubleshooting
-Building this pipeline involved overcoming several hard-hit integration hurdles. While many minor issues were resolved during the build stages (linting, permissions, etc.), the following challenges required deep analysis and manual intervention.
+## Running Locally
 
-### Git Workflow & "Conflicted Branch" Recovery
- **The Challenge** 
-While following a feature-branch workflow, several untested and unstable commits were accidently included in an open Pull Request to main. When I tried to revert the unstable changes and "cherry-pick" only the verified fixes, I encountered a cascade of merge conflicts that made the branch history unreliable.
+You can run the full two-tier stack on your machine with Docker Compose. No GitHub Actions or AWS account required.
 
-**The Resolution**
-I performed a Git Revert to roll back the repository to its last known stable state. 
-Instead of spending hours resolving complex cherry-pick conflicts, I created a brand-new branch directly from the stable main branch.
-I manually ported only the specific, verified files and configurations into this new branch. This allowed for a clean, conflict-free Pull Request and a successful merge into main.
+**Prerequisites:** Docker and Docker Compose installed.
 
-**The Lesson**
-This reinforced the necessity of Branch Protection and atomic commits.
-I learned that even in solo projects, maintaining a clean main branch is vital for deployment reliability.
+```bash
+# 1. Build the Flask image locally
+docker build -t inventory-app:latest .
 
-### Internal Server Error After Successful Deployment
-**The Challenge** 
-Upon deployment, the application containers were reported as "Healthy," yet the URL returned an HTTP 500 Internal Server Error.
+# 2. Set the required environment variables
+export DOCKER_USERNAME=inventory-app
+export IMAGE_TAG=latest
+export DB_PASSWORD=yourpassword
 
-**The Root Cause**
-During the initial run, the db/init.sql file was missing on the EC2 host. Volume mount instruction in docker compose, created a directory named init.sql instead of a file. MySQL initialized its internal data volume db_data meaning no tables were created.
+# 3. Start the stack (app + MySQL)
+docker compose up -d
 
-App logs showed the following crash:
-
-```text
-mysql.connector.errors.ProgrammingError: 1146 (42S02): Table 'inventory.tools' doesn't exist
+# 4. Visit the app
+open http://localhost:8080
 ```
 
-**The Resolution**
- I updated the deploy_to_ec2.yml workflow to explicitly include the db/ directory in the appleboy/scp-action phase, ensuring the real init.sql script reached the EC2 host.
- Executed sudo docker compose down -v to delete the stale, uninitialized database volumes.
- This forced MySQL to treat the next startup as a First Run and finally executing the init.sql script and creating the required schema.
+To stop and clean up:
+```bash
+docker compose down -v
+```
 
-**The Lesson**
-I learned that Database volumes are persistent. Simply fixing a script isn't enough; you must reset the volume state to force a re-initialization.
+> **Note:** The `docker-compose.yml` references `${DOCKER_USERNAME}/inventory-app:${IMAGE_TAG}` for the app image. When running locally, set `DOCKER_USERNAME=inventory-app` and `IMAGE_TAG=latest` so it matches the image you built in step 1.
 
 ## Reflections & Future Enhancements:
 
